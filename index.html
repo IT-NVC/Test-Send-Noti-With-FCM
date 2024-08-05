@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Push Notifications</title>
+    <!-- this is require for safari on iphone -->
+    <link rel="manifest" href="manifest.json">
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-messaging-compat.js"></script>
+</head>
+<body>
+    <p>Test push message notifications</p>
+    <p id="myP"></p>
+    <br/>
+    <p id="status"></p>
+    <button onclick="requestPermission()">Request Permission</button>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyC0tBdwH6j9PwIpgT0be9BddqSOCcvXKds",
+            authDomain: "sendnotificationpubsub.firebaseapp.com",
+            projectId: "sendnotificationpubsub",
+            storageBucket: "sendnotificationpubsub.appspot.com",
+            messagingSenderId: "826826798842",
+            appId: "1:826826798842:web:8a8e7a71879cb169b8bb43",
+            measurementId: "G-B82ZY52T1B"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+
+        // Retrieve Firebase Messaging object.
+        const messaging = firebase.messaging();
+
+        // Register the service worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/firebase-messaging-sw.js')
+                .then((registration) => {
+                    console.log('Service Worker registered with scope:', registration.scope);
+                }).catch((err) => {
+                    console.error('Service Worker registration failed:', err);
+                });
+        } else {
+            console.error('Service Worker is not supported in this browser.');
+        }
+
+        function requestPermission() {
+                console.log('Requesting permission in other browsers...');
+                document.getElementById("status").innerHTML = 'Requesting permission in other browsers...';
+
+                Notification.requestPermission().then((permission) => {
+                    if (permission === 'granted') {
+                        console.log('Notification permission granted.');
+                        messaging.getToken({
+                            vapidKey: "BH2LloAXkVqECUEsMjWng8we3y9ioVfAv5myqRppj7wlKAMOtAJdtsijaqljNlxfAtbN8CUfhgaCfaBWnVyhXjE", // Replace with your VAPID public key
+                        }).then((currentToken) => {
+                            console.log('Token:', currentToken);
+                            if (currentToken) {
+                                document.getElementById("myP").innerHTML = currentToken;
+                                document.getElementById("status").innerHTML = 'Done';
+                                // Send the token to your server and save it in the database
+                            } else {
+                                console.log('No registration token available. Request permission to generate one.');
+                                document.getElementById("myP").innerHTML = 'No registration token available. Request permission to generate one.';
+                            }
+                        }).catch((err) => {
+                            console.error('An error occurred while retrieving token.', err);
+                            document.getElementById("status").innerHTML = 'BUG...';
+                            document.getElementById("myP").innerHTML = 'An error occurred while retrieving token: ' + err;
+                        });
+                    } else {
+                        console.log('Unable to get permission to notify.');
+                        document.getElementById("status").innerHTML = 'BUG...';
+                        document.getElementById("myP").innerHTML = 'Unable to get permission to notify.';
+                    }
+                }).catch((err) => {
+                    console.error('An error occurred while requesting permission.', err);
+                    document.getElementById("status").innerHTML = 'BUG...';
+                    document.getElementById("myP").innerHTML = 'An error occurred while requesting permission.';
+                });
+
+            return
+        }
+    </script>
+</body>
+</html>
